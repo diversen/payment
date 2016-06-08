@@ -85,7 +85,7 @@ class module {
         $this->parseGET();
         
         
-        if (!$this->userPays(session::getUserId())) {
+        if (!$this->userPaymentEnabled(session::getUserId())) {
             //echo "OK";
             $url = manip::deleteQueryPart($_SERVER['REQUEST_URI'], 'enable');
             echo html::createLink($url ."?enable=1", lang::translate('Enable payment'));
@@ -96,7 +96,7 @@ class module {
     }
     
     /**
-     * Checks if user pays
+     * Checks if user pays. Based on 'pay_date' and pays
      * @param int $user_id
      * @return boolean
      */
@@ -110,6 +110,19 @@ class module {
         if (date::inRange($row['pay_date'], $row['pay_date_end'], date::getDateNow())) {
             return true;
         }        
+        return false;
+    }
+    
+    public function userPaymentEnabled ($user_id) {
+        $row = $this->get($user_id);
+        if (empty($row)) {
+            return false;
+        }
+        
+        if ($row['pays'] == 1) {
+            return true;
+        }
+        
         return false;
     }
     
