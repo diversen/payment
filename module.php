@@ -2,14 +2,16 @@
 
 namespace modules\payment;
 
+use diversen\conf;
+use diversen\date;
 use diversen\db\q;
 use diversen\db\rb;
 use diversen\html;
+use diversen\html\table;
 use diversen\http;
 use diversen\lang;
 use diversen\session;
 use diversen\uri\manip;
-use diversen\date;
 use R;
 
 class module {
@@ -84,8 +86,8 @@ class module {
         
         $this->parseGET();
         
-        
-        if (!$this->userPaymentEnabled(session::getUserId())) {
+        $user_id = session::getUserId();
+        if (!$this->userPaymentEnabled($user_id)) {
             //echo "OK";
             $url = manip::deleteQueryPart($_SERVER['REQUEST_URI'], 'enable');
             echo html::createLink($url ."?enable=1", lang::translate('Enable payment'));
@@ -93,8 +95,41 @@ class module {
             $url = manip::deleteQueryPart($_SERVER['REQUEST_URI'], 'disable');
             echo html::createLink($url ."?disable=1", lang::translate('Disable payment'));
         }
+        
+        if ($this->userPays($user_id)) {
+            
+            $row = $this->get($user_id);
+            $row = $this->mergeHumanDates($row);
+            $str = table::tableBegin(array('class' => 'uk-table'));
+            $str.= "<tr>";
+            $str.= table::th(lang::translate('Period begin: '), array ('class' => 'uk-width-2-10'));
+            $str.= table::th(lang::translate('Period ends: '));
+            $str.= "</tr>";
+            $str.= "<tr>";
+            $str.= table::td($row['pay_date_human']);
+            $str.= table::td($row['pay_date_end_human']);
+            $str.= "</tr>";
+            $str.= "</table>";
+            
+            echo $str;
+        }
     }
     
+    /**
+     * Adds pay_date_human and pay_date_end_human to $row
+     * @param array $row
+     * @return array $row
+     */
+    public function mergeHumanDates($row) {
+        
+        $pay_time = strtotime($row['pay_date']);
+        $pay_time_end = strtotime($row['pay_date_end']);
+        $row['pay_date_human'] = ucfirst(strftime(conf::getMainIni('date_format_short'), $pay_time));
+        $row['pay_date_end_human'] = ucfirst(strftime(conf::getMainIni('date_format_short'), $pay_time_end));
+        
+        return $row;
+    }
+
     /**
      * Checks if user pays. Based on 'pay_date' and pays
      * @param int $user_id
