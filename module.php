@@ -10,9 +10,12 @@ use diversen\html;
 use diversen\html\table;
 use diversen\http;
 use diversen\lang;
+use diversen\moduleloader;
 use diversen\session;
 use diversen\uri\manip;
 use R;
+
+moduleloader::setModuleIniSettings('payment');
 
 class module {
     
@@ -80,7 +83,12 @@ class module {
     
     public function indexAction () {
         
-        if (!session::checkAccess('user', true) ) {
+        if (!session::checkAccess('user', true) ) {           
+            return;
+        }
+
+        if (!conf::getModuleIni('payment_enabled')) {
+            moduleloader::setStatus(404);
             return;
         }
         
@@ -88,7 +96,6 @@ class module {
         
         $user_id = session::getUserId();
         if (!$this->userPaymentEnabled($user_id)) {
-            //echo "OK";
             $url = manip::deleteQueryPart($_SERVER['REQUEST_URI'], 'enable');
             echo html::createLink($url ."?enable=1", lang::translate('Enable payment'));
         } else {
