@@ -13,7 +13,7 @@ use diversen\lang;
 use diversen\moduleloader;
 use diversen\session;
 use diversen\uri\manip;
-use R;
+use RedBeanPHP\R;
 
 moduleloader::setModuleIniSettings('payment');
 
